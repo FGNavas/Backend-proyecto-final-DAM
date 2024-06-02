@@ -2,7 +2,7 @@ package com.gamibi.gamibibackend.entityDTO;
 
 import java.util.List;
 
-public class VideoGameRAWG {
+public class VideoGameRAWGDTO {
     private Long id;
     private String name;
     private String descripcion_raw;
@@ -25,7 +25,7 @@ public class VideoGameRAWG {
 
     private List<String> publishers;
 
-    public VideoGameRAWG() {
+    public VideoGameRAWGDTO() {
     }
 
     public Long getId() {

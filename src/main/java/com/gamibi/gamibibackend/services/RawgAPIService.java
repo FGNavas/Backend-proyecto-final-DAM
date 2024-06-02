@@ -7,9 +7,10 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class RawgAPIService {
 
-    @Value("${rawg.api.key}") // Asegúrate de tener esta propiedad en tu archivo application.properties
+    @Value("${rawg.api.key}")
     private String rawgAPIKey;
-
+    @Value("${rawg.api.url}")
+    private String rawgAPIURL;
     private final RestTemplate restTemplate;
 
     public RawgAPIService(RestTemplate restTemplate) {
@@ -17,7 +18,7 @@ public class RawgAPIService {
     }
 
     public String getGameInfoById(String gameId) {
-        String url = "https://api.rawg.io/api/games/" + gameId + "?key=" + rawgAPIKey;
+        String url = rawgAPIURL + gameId + "?key=" + rawgAPIKey;
         return restTemplate.getForObject(url, String.class);
     }
 }

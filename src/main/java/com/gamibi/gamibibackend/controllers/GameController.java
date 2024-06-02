@@ -1,14 +1,22 @@
 package com.gamibi.gamibibackend.controllers;
 
-import com.gamibi.gamibibackend.entityDTO.VideoGameRAWG;
+import com.gamibi.gamibibackend.dao.IUserGameDao;
+import com.gamibi.gamibibackend.entity.UserGame;
+import com.gamibi.gamibibackend.entity.VideoJuego;
+import com.gamibi.gamibibackend.entityDTO.ResponseDTO;
+import com.gamibi.gamibibackend.entityDTO.VideoGameDTO;
+import com.gamibi.gamibibackend.entityDTO.VideoGameRAWGDTO;
+import com.gamibi.gamibibackend.entityDTO.VideoGameSearchResultDTO;
+import com.gamibi.gamibibackend.repository.UserGameRepository;
+import com.gamibi.gamibibackend.repository.VideoJuegoRepository;
 import com.gamibi.gamibibackend.services.RawgAPIService;
+import com.gamibi.gamibibackend.services.VideoJuegoServiceImpl;
 import com.google.gson.*;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,131 +26,161 @@ import java.util.List;
 public class GameController {
 
     private final RawgAPIService rawgAPIService;
+    private final VideoJuegoRepository videoJuegoRepository;
+    @Autowired
+    private IUserGameDao userGameDao;
+    private final UserGameRepository userGameRepository;
+    private final VideoJuegoServiceImpl videoJuegoService;
+
     private JsonObject jsonObject;
 
-    public GameController(RawgAPIService rawgAPIService) {
+    public GameController(RawgAPIService rawgAPIService, VideoJuegoRepository videoJuegoRepository, UserGameRepository userGameRepository, VideoJuegoServiceImpl videoJuegoService) {
         this.rawgAPIService = rawgAPIService;
+        this.videoJuegoRepository = videoJuegoRepository;
+        this.userGameRepository = userGameRepository;
+        this.videoJuegoService = videoJuegoService;
     }
 
     @GetMapping("/games/{gameId}")
-    public ResponseEntity<VideoGameRAWG> getGameInfo(@PathVariable String gameId) {
-        String gameInfoJson = rawgAPIService.getGameInfoById(gameId);
+    public ResponseEntity<?> getGameInfo(@PathVariable Long gameId, @PathVariable Long userId) {
+        // Obtener información del UserGame
+        UserGame userGame = userGameDao.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
+                .orElse(null);
 
-        VideoGameRAWG gameInfo = convertirJsonAGameInfo(gameInfoJson);
-        return ResponseEntity.ok().body(gameInfo);
+        // Obtener información del videojuego de la API de RAWG
+        String gameInfoJson = rawgAPIService.getGameInfoById(String.valueOf(gameId));
+        VideoGameRAWGDTO rawgVideoGameDTO = convertirJsonAGameInfo(gameInfoJson);
+
+        // Crear el VideoGameDTO combinando la información
+        if (userGame != null) {
+            VideoGameDTO videoGameDTO = new VideoGameDTO();
+            videoGameDTO.setRawgVideoGame(rawgVideoGameDTO);
+            videoGameDTO.setPurchaseDate(userGame.getPurchaseDate());
+            videoGameDTO.setFavorite(userGame.isFavorite());
+            videoGameDTO.setStatus(userGame.getStatus());
+
+            // Respondemos con el VideoGameDTO y un identificador
+            return ResponseEntity.ok().body(new ResponseDTO("VideoGameDTO", videoGameDTO));
+        } else {
+            // Respondemos con el VideoGameRAWGDTO y un identificador
+            return ResponseEntity.ok().body(new ResponseDTO("VideoGameRAWGDTO", rawgVideoGameDTO));
+        }
     }
 
-    private VideoGameRAWG convertirJsonAGameInfo(String gameInfoJson) {
+
+
+
+    private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
         Gson gson = new Gson();
         JsonElement jsonElement = JsonParser.parseString(gameInfoJson);
         jsonObject = jsonElement.getAsJsonObject();
 
-        VideoGameRAWG videoGameRAWG = new VideoGameRAWG();
+        VideoGameRAWGDTO videoGameRAWGDTO = new VideoGameRAWGDTO();
 
         if (jsonObject.has("id")) {
             JsonElement descripcionElement = jsonObject.get("id");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setId(jsonObject.get("id").getAsLong());
+                videoGameRAWGDTO.setId(jsonObject.get("id").getAsLong());
             } else {
-                videoGameRAWG.setId(1L);
+                videoGameRAWGDTO.setId(1L);
             }
         }
 
         if (jsonObject.has("name")) {
             JsonElement descripcionElement = jsonObject.get("name");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setName(jsonObject.get("name").getAsString());
+                videoGameRAWGDTO.setName(jsonObject.get("name").getAsString());
             } else {
-                videoGameRAWG.setName("No name");
+                videoGameRAWGDTO.setName("No name");
             }
         }
 
         if (jsonObject.has("description_raw")) {
             JsonElement descripcionElement = jsonObject.get("description_raw");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setDescripcion_raw(jsonObject.get("description_raw").getAsString());
+                videoGameRAWGDTO.setDescripcion_raw(jsonObject.get("description_raw").getAsString());
             } else {
-                videoGameRAWG.setDescripcion_raw("{ No description }");
+                videoGameRAWGDTO.setDescripcion_raw("{ No description }");
             }
         }
         if (jsonObject.has("metacritic")) {
             JsonElement descripcionElement = jsonObject.get("metacritic");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setMetacritic(jsonObject.get("metacritic").getAsDouble());
+                videoGameRAWGDTO.setMetacritic(jsonObject.get("metacritic").getAsDouble());
             } else {
-                videoGameRAWG.setMetacritic(0.0);
+                videoGameRAWGDTO.setMetacritic(0.0);
             }
         }
         if (jsonObject.has("rating")) {
             JsonElement descripcionElement = jsonObject.get("rating");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setRating(jsonObject.get("rating").getAsDouble());
+                videoGameRAWGDTO.setRating(jsonObject.get("rating").getAsDouble());
             } else {
-                videoGameRAWG.setRating(0.0);
+                videoGameRAWGDTO.setRating(0.0);
             }
         }
         if (jsonObject.has("rating_top")) {
             JsonElement descripcionElement = jsonObject.get("rating_top");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setRating_top(jsonObject.get("rating_top").getAsDouble());
+                videoGameRAWGDTO.setRating_top(jsonObject.get("rating_top").getAsDouble());
             } else {
-                videoGameRAWG.setRating_top(0.0);
+                videoGameRAWGDTO.setRating_top(0.0);
             }
         }
         if (jsonObject.has("released")) {
             JsonElement descripcionElement = jsonObject.get("released");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setReleased(jsonObject.get("released").getAsString());
+                videoGameRAWGDTO.setReleased(jsonObject.get("released").getAsString());
             } else {
-                videoGameRAWG.setReleased("");
+                videoGameRAWGDTO.setReleased("");
             }
         }
         if (jsonObject.has("playtime")) {
             JsonElement descripcionElement = jsonObject.get("playtime");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setPlaytime(jsonObject.get("playtime").getAsDouble());
+                videoGameRAWGDTO.setPlaytime(jsonObject.get("playtime").getAsDouble());
             } else {
-                videoGameRAWG.setPlaytime(0.0);
+                videoGameRAWGDTO.setPlaytime(0.0);
             }
         }
         if (jsonObject.has("background_image")) {
             JsonElement descripcionElement = jsonObject.get("background_image");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setBackground_image(jsonObject.get("background_image").getAsString());
+                videoGameRAWGDTO.setBackground_image(jsonObject.get("background_image").getAsString());
             } else {
-                videoGameRAWG.setBackground_image("");
+                videoGameRAWGDTO.setBackground_image("");
             }
         }
         if (jsonObject.has("background_image_additional")) {
             JsonElement descripcionElement = jsonObject.get("background_image_additional");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setBackground_image_additional(jsonObject.get("background_image_additional").getAsString());
+                videoGameRAWGDTO.setBackground_image_additional(jsonObject.get("background_image_additional").getAsString());
             } else {
-                videoGameRAWG.setBackground_image_additional("");
+                videoGameRAWGDTO.setBackground_image_additional("");
             }
         }
         if (jsonObject.has("saturated_color")) {
             JsonElement descripcionElement = jsonObject.get("saturated_color");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setSaturated_color(jsonObject.get("saturated_color").getAsString());
+                videoGameRAWGDTO.setSaturated_color(jsonObject.get("saturated_color").getAsString());
             } else {
-                videoGameRAWG.setSaturated_color("");
+                videoGameRAWGDTO.setSaturated_color("");
             }
         }
         if (jsonObject.has("dominant_color")) {
             JsonElement descripcionElement = jsonObject.get("dominant_color");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setDominant_color(jsonObject.get("dominant_color").getAsString());
+                videoGameRAWGDTO.setDominant_color(jsonObject.get("dominant_color").getAsString());
             } else {
-                videoGameRAWG.setDominant_color("");
+                videoGameRAWGDTO.setDominant_color("");
             }
         }
         if (jsonObject.has("website")) {
             JsonElement descripcionElement = jsonObject.get("website");
             if (!descripcionElement.isJsonNull()) {
-                videoGameRAWG.setWebsite(jsonObject.get("website").getAsString());
+                videoGameRAWGDTO.setWebsite(jsonObject.get("website").getAsString());
             } else {
-                videoGameRAWG.setWebsite("");
+                videoGameRAWGDTO.setWebsite("");
             }
         }
         if (jsonObject.has("genres")) {
@@ -160,7 +198,7 @@ public class GameController {
                     }
                 }
             });
-            videoGameRAWG.setGenres(genreNames);
+            videoGameRAWGDTO.setGenres(genreNames);
         }
         if (jsonObject.has("publishers")) {
             JsonArray publishersArray = jsonObject.getAsJsonArray("publishers");
@@ -177,7 +215,7 @@ public class GameController {
                     }
                 }
             });
-            videoGameRAWG.setPublishers(publisherNames);
+            videoGameRAWGDTO.setPublishers(publisherNames);
         }
         if (jsonObject.has("platforms")) {
             JsonArray platformsArray = jsonObject.getAsJsonArray("platforms");
@@ -191,12 +229,42 @@ public class GameController {
                     platformNames.add("Unknown Platform");
                 }
             }
-            videoGameRAWG.setPlatforms(platformNames);
+            videoGameRAWGDTO.setPlatforms(platformNames);
         }
 
 
-        return videoGameRAWG;
+        return videoGameRAWGDTO;
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<VideoGameSearchResultDTO>> searchGames(@RequestParam String name, @RequestParam int page, @RequestParam int size) {
+        List<VideoJuego> videoJuegos = videoJuegoRepository.findByTituloContainingIgnoreCase(name);
+        if (videoJuegos.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
+        }
+        List<VideoGameSearchResultDTO> searchResults = new ArrayList<>();
+        int start = page * size;
+        int end = Math.min(start + size, videoJuegos.size());
+
+        for (int i = start; i < end; i++) {
+            VideoJuego videoJuego = videoJuegos.get(i);
+            String gameInfoJson = rawgAPIService.getGameInfoById(videoJuego.getId().toString());
+            VideoGameRAWGDTO gameInfo = convertirJsonAGameInfo(gameInfoJson);
+
+            VideoGameSearchResultDTO resultDTO = new VideoGameSearchResultDTO(
+                    videoJuego.getId(),
+                    videoJuego.getTitulo(),
+                    gameInfo.getBackground_image()
+            );
+            searchResults.add(resultDTO);
+        }
+
+        return ResponseEntity.ok().body(searchResults);
+    }
+
+
+
+
 
 }
 

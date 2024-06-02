@@ -1,4 +1,4 @@
-package com.gamibi.gamibibackend.controllers;
+package com.gamibi.gamibibackend.repository;
 
 import com.gamibi.gamibibackend.entity.UserGame;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface UserGameRepository extends JpaRepository<UserGame, Long> {
-    Optional<UserGame> findByUserIdAndGameId(Long userId, Long gameId);
+    Optional<UserGame> findByUsuario_IdAndVideoJuego_Id(Long usuarioId, Long videoJuegoId);
 }
