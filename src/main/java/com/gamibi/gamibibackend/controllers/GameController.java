@@ -20,9 +20,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/RawgApi")
+@RequestMapping("/gamibiApi")
 public class GameController {
 
     private final RawgAPIService rawgAPIService;
@@ -43,30 +45,58 @@ public class GameController {
 
     @GetMapping("/games/{gameId}")
     public ResponseEntity<?> getGameInfo(@PathVariable Long gameId, @PathVariable Long userId) {
-        // Obtener información del UserGame
-        UserGame userGame = userGameDao.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
-                .orElse(null);
+        // Buscar información del UserGame en la base de datos
+        Optional<UserGame> optionalUserGame = userGameDao.findByUsuario_IdAndVideoJuego_Id(userId, gameId);
 
-        // Obtener información del videojuego de la API de RAWG
+        // Buscar información del juego en la API de RAWG
         String gameInfoJson = rawgAPIService.getGameInfoById(String.valueOf(gameId));
         VideoGameRAWGDTO rawgVideoGameDTO = convertirJsonAGameInfo(gameInfoJson);
 
-        // Crear el VideoGameDTO combinando la información
-        if (userGame != null) {
+        if (optionalUserGame.isPresent()) {
+            // Si el juego está en la base de datos, crear un VideoGameDTO combinando la información
+            UserGame userGame = optionalUserGame.get();
             VideoGameDTO videoGameDTO = new VideoGameDTO();
             videoGameDTO.setRawgVideoGame(rawgVideoGameDTO);
             videoGameDTO.setPurchaseDate(userGame.getPurchaseDate());
             videoGameDTO.setFavorite(userGame.isFavorite());
             videoGameDTO.setStatus(userGame.getStatus());
 
-            // Respondemos con el VideoGameDTO y un identificador
             return ResponseEntity.ok().body(new ResponseDTO("VideoGameDTO", videoGameDTO));
         } else {
-            // Respondemos con el VideoGameRAWGDTO y un identificador
+            // Si el juego no está en la base de datos, responder con el VideoGameRAWGDTO
             return ResponseEntity.ok().body(new ResponseDTO("VideoGameRAWGDTO", rawgVideoGameDTO));
         }
     }
 
+    @GetMapping("/games/favorites")
+    public ResponseEntity<?> getFavoriteGames(@RequestParam Long userId) {
+        List<VideoGameDTO> favoriteGames = videoJuegoService.findFavoriteGamesByUserId(userId);
+        return new ResponseEntity<>(favoriteGames, HttpStatus.OK);
+    }
+    @GetMapping("/games/user")
+    public ResponseEntity<?> getUserGames(@RequestParam Long userId) {
+        List<VideoJuego> userGames = videoJuegoService.findAllGamesByUserId(userId);
+        return new ResponseEntity<>(userGames, HttpStatus.OK);
+    }
+
+    @GetMapping("/games/search/byname")
+    public ResponseEntity<?> getGamesByName(@RequestParam String titulo) {
+
+        List<VideoJuego> listaJuegos = videoJuegoService.findByName(titulo);
+        List<VideoGameRAWGDTO> rawgGames = new ArrayList<>();
+        listaJuegos.forEach(j ->{
+            VideoGameRAWGDTO juego = convertirJsonAGameInfo(rawgAPIService.getGameInfoById(String.valueOf(j.getId())));
+        });
+                // Buscar información del juego en la API de RAWG
+
+
+        // Convertir la información en una lista de VideoGameDTO
+        List<VideoGameDTO> games = rawgGames.stream()
+                .map(rawgGame -> new VideoGameDTO(rawgGame, null, false, null)) // nulls para PurchaseDate, favorite y status
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(games, HttpStatus.OK);
+    }
 
 
 
@@ -235,6 +265,7 @@ public class GameController {
 
         return videoGameRAWGDTO;
     }
+
 
     @GetMapping("/search")
     public ResponseEntity<List<VideoGameSearchResultDTO>> searchGames(@RequestParam String name, @RequestParam int page, @RequestParam int size) {

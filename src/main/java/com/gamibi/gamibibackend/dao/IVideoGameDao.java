@@ -12,15 +12,24 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IVideoGameDao extends JpaRepository<VideoJuego, Long> {
-    @Query("select v from VideoJuego v where v.titulo like %?1%")
-    List<VideoJuego> findbyName(String titulo);
+    @Query("SELECT v FROM VideoJuego v WHERE v.titulo LIKE %:titulo%")
+    List<VideoJuego> findByName(@Param("titulo") String titulo);
+
+
     @Query("SELECT v FROM VideoJuego v WHERE v.titulo LIKE %:titulo% AND v.usuario.id = :usuarioId")
     List<VideoJuego> findByNameAndUserId(@Param("titulo") String titulo, @Param("usuarioId") Long usuarioId);
 
     @Query("SELECT u FROM UserGame u WHERE u.usuario.id = :userId AND u.videoJuego.id = :videoJuegoId")
     Optional<UserGame> findByUserIdAndVideoJuegoId(@Param("userId") Long userId, @Param("videoJuegoId") Long videoJuegoId);
+    @Query("SELECT u.videoJuego FROM UserGame u WHERE u.usuario.id = :userId AND u.favorite = true")
+    List<VideoJuego> findFavoriteGamesByUserId(@Param("userId") Long userId);
+    @Query("SELECT u.videoJuego FROM UserGame u WHERE u.usuario.id = :userId")
+    List<VideoJuego> findAllGamesByUserId(@Param("userId") Long userId);
 
-    VideoGameRAWGDTO findInfoAPi(String id);
+
+
 }
+
+
 
 

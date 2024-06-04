@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/gamibiApi")
+@RequestMapping("/RawgApi")
 public class GameControllerRAWG {
 
     private final RawgAPIService rawgAPIService;

@@ -4,6 +4,7 @@ import com.gamibi.gamibibackend.dao.IVideoGameDao;
 import com.gamibi.gamibibackend.entity.UserGame;
 import com.gamibi.gamibibackend.entity.VideoJuego;
 import com.gamibi.gamibibackend.entityDTO.VideoGameDTO;
+import com.gamibi.gamibibackend.entityDTO.VideoGameRAWGDTO;
 import com.gamibi.gamibibackend.services.IVideoJuegoService;
 import com.gamibi.gamibibackend.services.RawgAPIService;
 import jakarta.validation.Valid;
@@ -77,6 +78,10 @@ public class VideoJuegoController {
             // Si no se proporciona el userId, devolver solo los datos del videojuego
             return new ResponseEntity<>(videoGame, HttpStatus.OK);
         }
+    }
+
+    private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
+        return null;
     }
 
     @PostMapping("/addgame")
