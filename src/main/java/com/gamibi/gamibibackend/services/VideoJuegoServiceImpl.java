@@ -136,7 +136,7 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
     }
 
     private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
-        Gson gson = new Gson();
+
         JsonElement jsonElement = JsonParser.parseString(gameInfoJson);
         jsonObject = jsonElement.getAsJsonObject();
 

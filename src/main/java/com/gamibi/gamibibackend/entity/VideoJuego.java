@@ -19,6 +19,10 @@ public class VideoJuego implements Serializable {
     private Long id;
     @Column(name = "titulo")
     private String titulo;
-
-
+    public VideoJuego() {
+    }
+    public VideoJuego(Long id, String titulo) {
+        this.id = id;
+        this.titulo = titulo;
+    }
 }

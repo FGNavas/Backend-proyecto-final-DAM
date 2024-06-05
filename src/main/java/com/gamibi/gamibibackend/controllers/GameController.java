@@ -86,6 +86,9 @@ public class GameController {
         List<VideoGameRAWGDTO> rawgGames = new ArrayList<>();
         listaJuegos.forEach(j ->{
             VideoGameRAWGDTO juego = convertirJsonAGameInfo(rawgAPIService.getGameInfoById(String.valueOf(j.getId())));
+            if(rawgGames != null){
+                rawgGames.add(juego);
+            }
         });
                 // Buscar información del juego en la API de RAWG
 
