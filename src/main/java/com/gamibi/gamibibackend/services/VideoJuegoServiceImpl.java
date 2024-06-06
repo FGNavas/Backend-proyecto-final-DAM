@@ -2,10 +2,14 @@ package com.gamibi.gamibibackend.services;
 
 import com.gamibi.gamibibackend.dao.IUserGameDao;
 import com.gamibi.gamibibackend.dao.IVideoGameDao;
+import com.gamibi.gamibibackend.entity.GameStatus;
 import com.gamibi.gamibibackend.entity.UserGame;
+import com.gamibi.gamibibackend.entity.Usuario;
 import com.gamibi.gamibibackend.entity.VideoJuego;
 import com.gamibi.gamibibackend.entityDTO.VideoGameDTO;
 import com.gamibi.gamibibackend.entityDTO.VideoGameRAWGDTO;
+import com.gamibi.gamibibackend.repository.UserGameRepository;
+import com.gamibi.gamibibackend.repository.UsuarioRepository;
 import com.google.gson.*;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +33,10 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
     private IUserGameDao userGameDao;
     @Autowired
     private RawgAPIService rawgAPIService;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private UserGameRepository userGameRepository;
     private JsonObject jsonObject;
 
     private List<VideoGameDTO> listaJuegosUsuario = new ArrayList<>();
@@ -144,7 +153,61 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         return listaJuegos;
     }
 
-    private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
+    @Override
+    public void addGameToUser(Long userId, Long gameId, Date purchaseDate, boolean favorite, GameStatus status, int rating) {
+        Usuario usuario = usuarioRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        UserGame userGame = new UserGame();
+        userGame.setUsuario(usuario);
+        userGame.setVideoJuego(new VideoJuego(gameId, null));
+        userGame.setPurchaseDate(purchaseDate);
+        userGame.setFavorite(favorite);
+        userGame.setStatus(status);
+        userGame.setRating(rating);
+
+        userGameRepository.save(userGame);
+    }
+
+    @Override
+    public void updateFavoriteStatus(Long userId, Long gameId, boolean favorite) {
+        UserGame userGame = userGameRepository.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
+                .orElseThrow(() -> new RuntimeException("Juego no encontrado en la lista del usuario"));
+        userGame.setFavorite(favorite);
+        userGameRepository.save(userGame);
+    }
+
+    @Override
+    public void removeGameFromUser(Long userId, Long gameId) {
+        UserGame userGame = userGameRepository.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
+                .orElseThrow(() -> new RuntimeException("Juego no encontrado en la lista del usuario"));
+        userGameRepository.delete(userGame);
+    }
+
+    @Override
+    public void updateGameStatus(Long userId, Long gameId, GameStatus status) {
+        UserGame userGame = userGameRepository.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
+                .orElseThrow(() -> new RuntimeException("Juego no encontrado en la lista del usuario"));
+        userGame.setStatus(status);
+        userGameRepository.save(userGame);
+    }
+
+    @Override
+    public List<VideoGameDTO> findPendingGamesByUserId(Long userId) {
+        List<UserGame> pendingUserGames = userGameRepository.findByUsuarioIdAndStatus(userId, GameStatus.PENDIENTE);
+        List<VideoGameDTO> userPendingList = new ArrayList<>();
+
+        pendingUserGames.forEach(pug ->{
+            VideoGameRAWGDTO videoGameRAWGDTO = convertirJsonAGameInfo(rawgAPIService.getGameInfoById(String.valueOf(pug.getVideoJuego().getId())));
+            VideoGameDTO videoGameDTO = new VideoGameDTO(videoGameRAWGDTO,pug.getPurchaseDate(),pug.isFavorite(),pug.getStatus());
+            userPendingList.add(videoGameDTO);
+        });
+
+        return userPendingList;
+    }
+
+
+
+        private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
 
         JsonElement jsonElement = JsonParser.parseString(gameInfoJson);
         jsonObject = jsonElement.getAsJsonObject();

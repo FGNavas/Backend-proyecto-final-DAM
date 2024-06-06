@@ -1,6 +1,7 @@
 package com.gamibi.gamibibackend.controllers;
 
 import com.gamibi.gamibibackend.dao.IUserGameDao;
+import com.gamibi.gamibibackend.entity.GameStatus;
 import com.gamibi.gamibibackend.entity.UserGame;
 import com.gamibi.gamibibackend.entity.VideoJuego;
 import com.gamibi.gamibibackend.entityDTO.ResponseDTO;
@@ -22,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -104,7 +106,33 @@ public class GameController {
 
         return new ResponseEntity<>(games, HttpStatus.OK);
     }
+    @PostMapping("/user/{userId}/game/{gameId}")
+    public ResponseEntity<Void> addGameToUser(@PathVariable Long userId, @PathVariable Long gameId,
+                                              @RequestParam Date purchaseDate, @RequestParam boolean favorite,
+                                              @RequestParam GameStatus status, @RequestParam int rating) {
+        videoJuegoService.addGameToUser(userId, gameId, purchaseDate, favorite, status, rating);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 
+    @PutMapping("/user/{userId}/game/{gameId}/favorite")
+    public ResponseEntity<Void> updateFavoriteStatus(@PathVariable Long userId, @PathVariable Long gameId,
+                                                     @RequestParam boolean favorite) {
+        videoJuegoService.updateFavoriteStatus(userId, gameId, favorite);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/user/{userId}/game/{gameId}")
+    public ResponseEntity<Void> removeGameFromUser(@PathVariable Long userId, @PathVariable Long gameId) {
+        videoJuegoService.removeGameFromUser(userId, gameId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/user/{userId}/game/{gameId}/status")
+    public ResponseEntity<Void> updateGameStatus(@PathVariable Long userId, @PathVariable Long gameId,
+                                                 @RequestParam GameStatus status) {
+        videoJuegoService.updateGameStatus(userId, gameId, status);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
 
     private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
