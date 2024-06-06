@@ -14,6 +14,9 @@ import com.gamibi.gamibibackend.services.VideoJuegoServiceImpl;
 import com.google.gson.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -73,9 +76,10 @@ public class GameController {
         List<VideoGameDTO> favoriteGames = videoJuegoService.findFavoriteGamesByUserId(userId);
         return new ResponseEntity<>(favoriteGames, HttpStatus.OK);
     }
+
     @GetMapping("/games/user")
     public ResponseEntity<?> getUserGames(@RequestParam Long userId) {
-        List<VideoJuego> userGames = videoJuegoService.findAllGamesByUserId(userId);
+        List<VideoGameDTO> userGames = videoJuegoService.findAllGamesByUserId(userId);
         return new ResponseEntity<>(userGames, HttpStatus.OK);
     }
 

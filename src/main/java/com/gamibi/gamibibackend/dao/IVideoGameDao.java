@@ -22,7 +22,7 @@ public interface IVideoGameDao extends JpaRepository<VideoJuego, Long> {
     List<VideoJuego> findFavoriteGamesByUserId(@Param("userId") Long userId);
 
     @Query("SELECT u.videoJuego FROM UserGame u WHERE u.usuario.id = :userId")
-    List<VideoJuego> findAllGamesByUserId(@Param("userId") Long userId);
+    List<UserGame> findAllGamesByUserId(@Param("userId") Long userId);
 }
 
 

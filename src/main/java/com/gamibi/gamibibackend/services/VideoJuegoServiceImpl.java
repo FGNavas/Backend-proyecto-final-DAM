@@ -131,8 +131,17 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VideoJuego> findAllGamesByUserId(Long userId) {
-        return videoGameDao.findAllGamesByUserId(userId);
+    public List<VideoGameDTO> findAllGamesByUserId(Long userId) {
+        List<VideoGameDTO> listaJuegos = new ArrayList<>();
+        List<UserGame>  userGames = videoGameDao.findAllGamesByUserId(userId);
+        userGames.forEach(gameUsers ->{
+
+            VideoGameRAWGDTO videoGameRAWGDTO;
+            videoGameRAWGDTO= convertirJsonAGameInfo(rawgAPIService.getGameInfoById(gameUsers.getUsuario().getId().toString()));
+            VideoGameDTO videoGameDTO = new VideoGameDTO(videoGameRAWGDTO,gameUsers.getPurchaseDate(),gameUsers.isFavorite(),gameUsers.getStatus());
+            listaJuegos.add(videoGameDTO);
+        });
+        return listaJuegos;
     }
 
     private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {

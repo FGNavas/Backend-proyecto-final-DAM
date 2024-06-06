@@ -23,7 +23,7 @@ public interface IVideoJuegoService {
     VideoGameDTO getVideoGameDTO(String titulo, Long userId);
     List<VideoGameDTO> findFavoriteGamesByUserId(Long userId);
 
-    List<VideoJuego> findAllGamesByUserId(Long userId);
+    List<VideoGameDTO> findAllGamesByUserId(Long userId);
 
 }
 
