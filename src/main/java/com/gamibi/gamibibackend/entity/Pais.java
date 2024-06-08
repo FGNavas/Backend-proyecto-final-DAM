@@ -8,13 +8,16 @@ import java.io.Serializable;
 
 @Getter
 @Setter
+/**
+ * Tabla con el listado de paises que puede seleccionar el usuario.
+ */
 @Entity
 @Table(name = "countries")
 public class Pais implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name= "paisId")
+    @Column(name = "paisId")
     private String paisId;
     @Column(name = "countriename", nullable = false, length = 100)
     private String name;

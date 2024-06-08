@@ -1,5 +1,8 @@
 package com.gamibi.gamibibackend.entityDTO;
 
+/**
+ * DTO para almacenar la respuesta de autenticación JWT.
+ */
 public class JwtAuthenticationResponse {
     private String accessToken;
 

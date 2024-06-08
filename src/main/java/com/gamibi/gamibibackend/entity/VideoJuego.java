@@ -11,6 +11,9 @@ import java.io.Serializable;
 
 @Getter
 @Setter
+/**
+ * Entidad que representa un videojuego en la base de datos.
+ */
 @Entity
 @Table(name = "videojuegos")
 public class VideoJuego implements Serializable {

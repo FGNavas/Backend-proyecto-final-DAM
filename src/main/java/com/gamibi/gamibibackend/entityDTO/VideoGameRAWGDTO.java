@@ -2,6 +2,9 @@ package com.gamibi.gamibibackend.entityDTO;
 
 import java.util.List;
 
+/**
+ * DTO para los datos del videojuego obtenidos de la API RAWG.
+ */
 public class VideoGameRAWGDTO {
     private Long id;
     private String name;
@@ -25,6 +28,9 @@ public class VideoGameRAWGDTO {
 
     private List<String> publishers;
 
+    /**
+     * Constructor por defecto.
+     */
     public VideoGameRAWGDTO() {
     }
 
@@ -51,6 +57,13 @@ public class VideoGameRAWGDTO {
         return descripcion_raw;
     }
 
+    /**
+     * Establece la descripción del videojuego.
+     * Si la descripción es nula, se asigna "{No description}".
+     * Si la descripción contiene la palabra "Español", se usa solo la parte después de esta palabra.
+     *
+     * @param descripcion_raw La descripción del videojuego.
+     */
     public void setDescripcion_raw(String descripcion_raw) {
         if (descripcion_raw == null) {
             this.descripcion_raw = "{No description}";

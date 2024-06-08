@@ -12,8 +12,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controlador para autenticar usuarios.
+ */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -27,6 +33,12 @@ public class AuthController {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
+    /**
+     * Autentica un usuario y genera un token JWT.
+     *
+     * @param loginRequest Datos de inicio de sesión del usuario.
+     * @return ResponseEntity que contiene el token JWT y el ID del usuario.
+     */
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
         try {

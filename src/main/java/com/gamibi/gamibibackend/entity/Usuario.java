@@ -7,6 +7,9 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Entidad que representa un usuario en la base de datos.
+ */
 @Entity
 @Getter
 @Setter
@@ -36,6 +39,11 @@ public class Usuario implements Serializable {
     @OneToMany(mappedBy = "usuario")
     private List<UserGame> juegos;
 
+    /**
+     * Obtiene el nombre del país del usuario.
+     *
+     * @return El nombre del país del usuario.
+     */
     public String getNombrePais() {
         return pais.getName();
     }

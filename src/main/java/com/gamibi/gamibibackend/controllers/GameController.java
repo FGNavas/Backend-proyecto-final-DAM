@@ -13,11 +13,7 @@ import com.gamibi.gamibibackend.repository.VideoJuegoRepository;
 import com.gamibi.gamibibackend.services.RawgAPIService;
 import com.gamibi.gamibibackend.services.VideoJuegoServiceImpl;
 import com.google.gson.*;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Controlador para manejar las solicitudes relacionadas con los juegos.
+ */
 @RestController
 @RequestMapping("/gamibiApi")
 public class GameController {
@@ -41,6 +40,14 @@ public class GameController {
 
     private JsonObject jsonObject;
 
+    /**
+     * Constructor de GameController.
+     *
+     * @param rawgAPIService       Servicio para interactuar con la API de RAWG.
+     * @param videoJuegoRepository Repositorio para acceder a los datos de los juegos.
+     * @param userGameRepository   Repositorio para acceder a los datos de los juegos de usuario.
+     * @param videoJuegoService    Servicio para operaciones relacionadas con los juegos.
+     */
     public GameController(RawgAPIService rawgAPIService, VideoJuegoRepository videoJuegoRepository, UserGameRepository userGameRepository, VideoJuegoServiceImpl videoJuegoService) {
         this.rawgAPIService = rawgAPIService;
         this.videoJuegoRepository = videoJuegoRepository;
@@ -48,6 +55,13 @@ public class GameController {
         this.videoJuegoService = videoJuegoService;
     }
 
+    /**
+     * Obtiene información detallada de un juego para un usuario específico, mediante la Id asignada.
+     *
+     * @param gameId ID del juego.
+     * @param userId ID del usuario.
+     * @return ResponseEntity que contiene la información del juego.
+     */
     @GetMapping("/games/{gameId}")
     public ResponseEntity<?> getGameInfo(@PathVariable Long gameId, @PathVariable Long userId) {
         // Buscar información del UserGame en la base de datos
@@ -73,31 +87,47 @@ public class GameController {
         }
     }
 
+    /**
+     * Obtiene los juegos favoritos de un usuario.
+     *
+     * @param userId ID del usuario.
+     * @return ResponseEntity que contiene la lista de juegos favoritos.
+     */
     @GetMapping("/games/favorites")
     public ResponseEntity<?> getFavoriteGames(@RequestParam Long userId) {
         List<VideoGameDTO> favoriteGames = videoJuegoService.findFavoriteGamesByUserId(userId);
         return new ResponseEntity<>(favoriteGames, HttpStatus.OK);
     }
 
+    /**
+     * Obtiene todos los juegos de un usuario.
+     *
+     * @param userId ID del usuario.
+     * @return ResponseEntity que contiene la lista de todos los juegos del usuario.
+     */
     @GetMapping("/games/user")
     public ResponseEntity<?> getUserGames(@RequestParam Long userId) {
         List<VideoGameDTO> userGames = videoJuegoService.findAllGamesByUserId(userId);
         return new ResponseEntity<>(userGames, HttpStatus.OK);
     }
 
+    /**
+     * Busca juegos por su nombre.
+     *
+     * @param titulo Nombre del juego a buscar.
+     * @return ResponseEntity que contiene la lista de juegos encontrados.
+     */
     @GetMapping("/games/search/byname")
     public ResponseEntity<?> getGamesByName(@RequestParam String titulo) {
 
         List<VideoJuego> listaJuegos = videoJuegoService.findByName(titulo);
         List<VideoGameRAWGDTO> rawgGames = new ArrayList<>();
-        listaJuegos.forEach(j ->{
+        listaJuegos.forEach(j -> {
             VideoGameRAWGDTO juego = convertirJsonAGameInfo(rawgAPIService.getGameInfoById(String.valueOf(j.getId())));
-            if(rawgGames != null){
+            if (rawgGames != null) {
                 rawgGames.add(juego);
             }
         });
-                // Buscar información del juego en la API de RAWG
-
 
         // Convertir la información en una lista de VideoGameDTO
         List<VideoGameDTO> games = rawgGames.stream()
@@ -106,6 +136,18 @@ public class GameController {
 
         return new ResponseEntity<>(games, HttpStatus.OK);
     }
+
+    /**
+     * Agrega un juego a la lista de juegos de un usuario.
+     *
+     * @param userId       ID del usuario.
+     * @param gameId       ID del juego.
+     * @param purchaseDate Fecha de compra del juego.
+     * @param favorite     Indicador de juego favorito.
+     * @param status       Estado del juego.
+     * @param rating       Calificación del juego.
+     * @return ResponseEntity con el estado de la operación.
+     */
     @PostMapping("/user/{userId}/game/{gameId}")
     public ResponseEntity<Void> addGameToUser(@PathVariable Long userId, @PathVariable Long gameId,
                                               @RequestParam Date purchaseDate, @RequestParam boolean favorite,
@@ -114,6 +156,14 @@ public class GameController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    /**
+     * Actualiza el estado de favorito de un juego para un usuario.
+     *
+     * @param userId   ID del usuario.
+     * @param gameId   ID del juego.
+     * @param favorite Indicador de juego favorito.
+     * @return ResponseEntity con el estado de la operación.
+     */
     @PutMapping("/user/{userId}/game/{gameId}/favorite")
     public ResponseEntity<Void> updateFavoriteStatus(@PathVariable Long userId, @PathVariable Long gameId,
                                                      @RequestParam boolean favorite) {
@@ -121,12 +171,27 @@ public class GameController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    /**
+     * Elimina un juego de la lista de juegos de un usuario.
+     *
+     * @param userId ID del usuario.
+     * @param gameId ID del juego.
+     * @return ResponseEntity con el estado de la operación.
+     */
     @DeleteMapping("/user/{userId}/game/{gameId}")
     public ResponseEntity<Void> removeGameFromUser(@PathVariable Long userId, @PathVariable Long gameId) {
         videoJuegoService.removeGameFromUser(userId, gameId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    /**
+     * Actualiza el estado de un juego para un usuario.
+     *
+     * @param userId ID del usuario.
+     * @param gameId ID del juego.
+     * @param status Nuevo estado del juego.
+     * @return ResponseEntity con el estado de la operación.
+     */
     @PutMapping("/user/{userId}/game/{gameId}/status")
     public ResponseEntity<Void> updateGameStatus(@PathVariable Long userId, @PathVariable Long gameId,
                                                  @RequestParam GameStatus status) {
@@ -134,6 +199,12 @@ public class GameController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    /**
+     * Convierte la información de un juego en formato JSON a un objeto VideoGameRAWGDTO.
+     *
+     * @param gameInfoJson Información del juego en formato JSON.
+     * @return Objeto VideoGameRAWGDTO.
+     */
 
     private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
         Gson gson = new Gson();
@@ -327,10 +398,5 @@ public class GameController {
 
         return ResponseEntity.ok().body(searchResults);
     }
-
-
-
-
-
 }
 

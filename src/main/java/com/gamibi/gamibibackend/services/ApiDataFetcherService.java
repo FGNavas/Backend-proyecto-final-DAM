@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/**
+ * Servicio para recuperar datos de la API y almacenarlos en la base de datos.
+ */
 @Service
 public class ApiDataFetcherService {
 
@@ -25,6 +28,9 @@ public class ApiDataFetcherService {
     @Autowired
     private ApiRequestStateRepository apiRequestStateRepository;
 
+    /**
+     * Recupera datos de la API y los almacena en la base de datos.
+     */
     @Transactional
     public void fetchAndStoreData() {
         // Obtener el último estado de la petición o inicializarlo
@@ -43,14 +49,14 @@ public class ApiDataFetcherService {
 
             // Hacer una petición a la API por ID
             String gameInfoJson = rawgAPIService.getGameInfoById(String.valueOf(currentGameId));
-            if(gameInfoJson == null){
+            if (gameInfoJson == null) {
                 continue;
             }
             VideoJuego game = parseApiResponse(gameInfoJson, currentGameId);
 
             // Guardar el juego en la base de datos si no es null
             if (game != null) {
-                System.out.println(game.getId()+" "+game.getTitulo());
+                System.out.println(game.getId() + " " + game.getTitulo());
                 videoJuegoRepository.save(game);
             }
             try {
@@ -67,6 +73,14 @@ public class ApiDataFetcherService {
         apiRequestStateRepository.save(requestState);
     }
 
+    /**
+     * Parsea la respuesta de la API y crea una instancia de VideoJuego.
+     *
+     * @param response La respuesta de la API.
+     * @param gameId   El ID del juego.
+     * @return El juego parseado o null si no se pudo parsear.
+     */
+     
     private VideoJuego parseApiResponse(String response, Long gameId) {
         // Parsear la respuesta de la API y crear una instancia de VideoJuego
         Gson gson = new Gson();

@@ -8,6 +8,9 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Servicio para interactuar con la API RAWG (Video Game Database).
+ */
 @Service
 public class RawgAPIService {
 
@@ -17,10 +20,21 @@ public class RawgAPIService {
     private String rawgAPIURL;
     private final RestTemplate restTemplate;
 
+    /**
+     * Constructor que inyecta una instancia de RestTemplate.
+     *
+     * @param restTemplate Instancia de RestTemplate utilizada para hacer solicitudes HTTP.
+     */
     public RawgAPIService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Obtiene la información de un juego mediante su ID utilizando la API RAWG.
+     *
+     * @param gameId ID del juego a consultar.
+     * @return La información del juego en formato JSON como una cadena de caracteres.
+     */
     public String getGameInfoById(String gameId) {
         try {
             String url = rawgAPIURL + gameId + "?key=" + rawgAPIKey;

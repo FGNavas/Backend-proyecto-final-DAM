@@ -3,7 +3,6 @@ package com.gamibi.gamibibackend.controllers;
 import com.gamibi.gamibibackend.entityDTO.VideoGameRAWGDTO;
 import com.gamibi.gamibibackend.services.RawgAPIService;
 import com.google.gson.*;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Controlador para gestionar las peticiones relacionadas con la API RAWG.
+ */
 @RestController
 @RequestMapping("/RawgApi")
 public class GameControllerRAWG {
@@ -24,6 +27,12 @@ public class GameControllerRAWG {
         this.rawgAPIService = rawgAPIService;
     }
 
+    /**
+     * Obtiene la información de un juego por su ID desde la API RAWG.
+     *
+     * @param gameId El ID del juego.
+     * @return La información del juego.
+     */
     @GetMapping("/gameSearch/{gameId}")
     public ResponseEntity<VideoGameRAWGDTO> getGameInfo(@PathVariable String gameId) {
         String gameInfoJson = rawgAPIService.getGameInfoById(gameId);
@@ -32,6 +41,12 @@ public class GameControllerRAWG {
         return ResponseEntity.ok().body(gameInfo);
     }
 
+    /**
+     * Convierte el JSON de respuesta de la API RAWG en un objeto VideoGameRAWGDTO.
+     *
+     * @param gameInfoJson El JSON de información del juego.
+     * @return El objeto VideoGameRAWGDTO.
+     */
     private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
         Gson gson = new Gson();
         JsonElement jsonElement = JsonParser.parseString(gameInfoJson);

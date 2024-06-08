@@ -10,12 +10,15 @@ import com.gamibi.gamibibackend.entityDTO.VideoGameDTO;
 import com.gamibi.gamibibackend.entityDTO.VideoGameRAWGDTO;
 import com.gamibi.gamibibackend.repository.UserGameRepository;
 import com.gamibi.gamibibackend.repository.UsuarioRepository;
-import com.google.gson.*;
-import org.springframework.transaction.annotation.Transactional;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,7 +26,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
+/**
+ * Implementación del servicio de videojuegos.
+ */
 @Service
 public class VideoJuegoServiceImpl implements IVideoJuegoService {
 
@@ -39,62 +44,122 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
     private UserGameRepository userGameRepository;
     private JsonObject jsonObject;
 
-    private List<VideoGameDTO> listaJuegosUsuario = new ArrayList<>();
-    private List<VideoGameRAWGDTO> listaInfoJuegos = new ArrayList<>();
+
+    /**
+     * Obtiene una lista de todos los videojuegos.
+     *
+     * @return lista de todos los videojuegos
+     */
     @Override
     @Transactional(readOnly = true)
     public List<VideoJuego> findAll() {
         return videoGameDao.findAll();
     }
 
+    /**
+     * Obtiene una lista paginada de todos los videojuegos.
+     *
+     * @param pageable información de paginación
+     * @return página de videojuegos
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<VideoJuego> findAll(Pageable pageable) {
         return videoGameDao.findAll(pageable);
     }
 
+    /**
+     * Busca un videojuego por su ID.
+     *
+     * @param id el ID del videojuego
+     * @return el videojuego, o null si no se encuentra
+     */
     @Override
     @Transactional(readOnly = true)
     public VideoJuego findById(Long id) {
         return videoGameDao.findById(id).orElse(null);
     }
 
+    /**
+     * Guarda un videojuego.
+     *
+     * @param videoGame el videojuego a guardar
+     * @return el videojuego guardado
+     */
     @Override
     @Transactional
     public VideoJuego save(VideoJuego videoGame) {
         return videoGameDao.save(videoGame);
     }
 
+    /**
+     * Elimina un videojuego por su ID.
+     *
+     * @param id el ID del videojuego a eliminar
+     */
     @Override
     @Transactional(readOnly = true)
     public void delete(Long id) {
         videoGameDao.deleteById(id);
     }
 
+    /**
+     * Busca videojuegos por su nombre.
+     *
+     * @param titulo el título del videojuego
+     * @return lista de videojuegos con el título especificado
+     */
     @Override
     @Transactional(readOnly = true)
     public List<VideoJuego> findByName(String titulo) {
         return videoGameDao.findByName(titulo);
     }
 
+    /**
+     * Busca videojuegos por su nombre y ID de usuario.
+     *
+     * @param titulo    el título del videojuego
+     * @param usuarioId el ID del usuario
+     * @return lista de videojuegos con el título especificado para el usuario
+     */
     @Override
     @Transactional(readOnly = true)
     public List<VideoJuego> findByNameAndUserId(String titulo, Long usuarioId) {
         return videoGameDao.findByNameAndUserId(titulo, usuarioId);
     }
 
+    /**
+     * Busca la relación entre usuario y videojuego por sus IDs.
+     *
+     * @param userId       el ID del usuario
+     * @param videoJuegoId el ID del videojuego
+     * @return un Optional con la relación usuario-videojuego si existe
+     */
     @Override
     @Transactional(readOnly = true)
     public Optional<UserGame> findByUserIdAndVideoJuegoId(Long userId, Long videoJuegoId) {
         return videoGameDao.findByUserIdAndVideoJuegoId(userId, videoJuegoId);
     }
 
+    /**
+     * Obtiene la información de un videojuego desde la API externa.
+     *
+     * @param id el ID del videojuego en la API externa
+     * @return la información del videojuego en formato VideoGameRAWGDTO
+     */
     @Override
     @Transactional(readOnly = true)
     public VideoGameRAWGDTO getGameInfoFromApi(String id) {
         return convertirJsonAGameInfo(rawgAPIService.getGameInfoById(id));
     }
 
+    /**
+     * Obtiene un DTO de videojuego con información del usuario.
+     *
+     * @param titulo el título del videojuego
+     * @param userId el ID del usuario
+     * @return un VideoGameDTO con la información del videojuego y del usuario
+     */
     @Override
     @Transactional(readOnly = true)
     public VideoGameDTO getVideoGameDTO(String titulo, Long userId) {
@@ -126,6 +191,12 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         return videoGameDTO;
     }
 
+    /**
+     * Busca los juegos favoritos de un usuario por su ID.
+     *
+     * @param userId el ID del usuario
+     * @return lista de VideoGameDTO con los juegos favoritos del usuario
+     */
     @Override
     @Transactional(readOnly = true)
     public List<VideoGameDTO> findFavoriteGamesByUserId(Long userId) {
@@ -136,23 +207,37 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         }).collect(Collectors.toList());
     }
 
-
-
+    /**
+     * Busca todos los juegos de un usuario por su ID.
+     *
+     * @param userId el ID del usuario
+     * @return lista de VideoGameDTO con todos los juegos del usuario
+     */
     @Override
     @Transactional(readOnly = true)
     public List<VideoGameDTO> findAllGamesByUserId(Long userId) {
         List<VideoGameDTO> listaJuegos = new ArrayList<>();
-        List<UserGame>  userGames = videoGameDao.findAllGamesByUserId(userId);
-        userGames.forEach(gameUsers ->{
+        List<UserGame> userGames = videoGameDao.findAllGamesByUserId(userId);
+        userGames.forEach(gameUsers -> {
 
             VideoGameRAWGDTO videoGameRAWGDTO;
-            videoGameRAWGDTO= convertirJsonAGameInfo(rawgAPIService.getGameInfoById(gameUsers.getUsuario().getId().toString()));
-            VideoGameDTO videoGameDTO = new VideoGameDTO(videoGameRAWGDTO,gameUsers.getPurchaseDate(),gameUsers.isFavorite(),gameUsers.getStatus());
+            videoGameRAWGDTO = convertirJsonAGameInfo(rawgAPIService.getGameInfoById(gameUsers.getUsuario().getId().toString()));
+            VideoGameDTO videoGameDTO = new VideoGameDTO(videoGameRAWGDTO, gameUsers.getPurchaseDate(), gameUsers.isFavorite(), gameUsers.getStatus());
             listaJuegos.add(videoGameDTO);
         });
         return listaJuegos;
     }
 
+    /**
+     * Añade un juego a la lista de un usuario.
+     *
+     * @param userId       el ID del usuario
+     * @param gameId       el ID del videojuego
+     * @param purchaseDate la fecha de compra del juego
+     * @param favorite     si el juego es favorito o no
+     * @param status       el estado del juego
+     * @param rating       la calificación del juego
+     */
     @Override
     public void addGameToUser(Long userId, Long gameId, Date purchaseDate, boolean favorite, GameStatus status, int rating) {
         Usuario usuario = usuarioRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -168,6 +253,13 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         userGameRepository.save(userGame);
     }
 
+    /**
+     * Actualiza el estado de favorito de un juego para un usuario.
+     *
+     * @param userId   el ID del usuario
+     * @param gameId   el ID del videojuego
+     * @param favorite true si el juego es favorito, false si no lo es
+     */
     @Override
     public void updateFavoriteStatus(Long userId, Long gameId, boolean favorite) {
         UserGame userGame = userGameRepository.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
@@ -176,6 +268,12 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         userGameRepository.save(userGame);
     }
 
+    /**
+     * Elimina un juego de la lista de un usuario.
+     *
+     * @param userId el ID del usuario
+     * @param gameId el ID del videojuego
+     */
     @Override
     public void removeGameFromUser(Long userId, Long gameId) {
         UserGame userGame = userGameRepository.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
@@ -183,6 +281,13 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         userGameRepository.delete(userGame);
     }
 
+    /**
+     * Actualiza el estado de un juego para un usuario.
+     *
+     * @param userId el ID del usuario
+     * @param gameId el ID del videojuego
+     * @param status el nuevo estado del juego
+     */
     @Override
     public void updateGameStatus(Long userId, Long gameId, GameStatus status) {
         UserGame userGame = userGameRepository.findByUsuario_IdAndVideoJuego_Id(userId, gameId)
@@ -191,23 +296,35 @@ public class VideoJuegoServiceImpl implements IVideoJuegoService {
         userGameRepository.save(userGame);
     }
 
+    /**
+     * Busca los juegos pendientes de un usuario por su ID.
+     *
+     * @param userId el ID del usuario
+     * @return lista de VideoGameDTO con los juegos pendientes del usuario
+     */
     @Override
     public List<VideoGameDTO> findPendingGamesByUserId(Long userId) {
         List<UserGame> pendingUserGames = userGameRepository.findByUsuarioIdAndStatus(userId, GameStatus.PENDIENTE);
         List<VideoGameDTO> userPendingList = new ArrayList<>();
 
-        pendingUserGames.forEach(pug ->{
+        pendingUserGames.forEach(pug -> {
             VideoGameRAWGDTO videoGameRAWGDTO = convertirJsonAGameInfo(rawgAPIService.getGameInfoById(String.valueOf(pug.getVideoJuego().getId())));
-            VideoGameDTO videoGameDTO = new VideoGameDTO(videoGameRAWGDTO,pug.getPurchaseDate(),pug.isFavorite(),pug.getStatus());
+            VideoGameDTO videoGameDTO = new VideoGameDTO(videoGameRAWGDTO, pug.getPurchaseDate(), pug.isFavorite(), pug.getStatus());
             userPendingList.add(videoGameDTO);
         });
 
         return userPendingList;
     }
 
+    /**
+     * Convierte la información del juego desde formato JSON a un objeto VideoGameRAWGDTO.
+     *
+     * @param gameInfoJson la información del juego en formato JSON
+     * @return un objeto VideoGameRAWGDTO con la información del juego
+     */
 
 
-        private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
+    private VideoGameRAWGDTO convertirJsonAGameInfo(String gameInfoJson) {
 
         JsonElement jsonElement = JsonParser.parseString(gameInfoJson);
         jsonObject = jsonElement.getAsJsonObject();
